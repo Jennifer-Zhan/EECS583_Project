@@ -11,8 +11,8 @@ int main() {
         int z = A[K[i]];
         
         if (B[i] == 0) {
-            A[L[i]] = z + 5; // z + some constant
-            A[R[i]] = A[R[i]] + 1; // reduction statement
+            A[L[i]] = z + 5;
+            A[R[i]] = A[R[i]] + 1;
         }
     }
 

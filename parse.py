@@ -22,11 +22,16 @@ class FuncDefVisitor(c_ast.NodeVisitor):
                                             type=c_ast.TypeDecl(declname='write_counter', quals=[], align=None, type=
                                                                 c_ast.IdentifierType(names=['int'])), 
                                                                 init=c_ast.Constant(type='int', value='0'), bitsize=None)
+            
+            distinct_write_counter_decl = c_ast.Decl(name='distinct_write_counter', quals=[], align=[], storage=[], funcspec=[],
+                                            type=c_ast.TypeDecl(declname='distinct_write_counter', quals=[], align=None, type=
+                                                                c_ast.IdentifierType(names=['int'])), 
+                                                                init=c_ast.Constant(type='int', value='0'), bitsize=None)
 
             self.array_decls.append(write_counter_decl)
+            self.array_decls.append(distinct_write_counter_decl)
 
 class LoopVisitor(c_ast.NodeVisitor):
-
     def visit_For(self, node):
         write_increment = c_ast.Assignment(op='+=', lvalue=c_ast.ID(name='write_counter'), rvalue=c_ast.Constant(type='int', value='1'))
         updated_node = copy.deepcopy(node.stmt.block_items)
@@ -199,6 +204,56 @@ def mark_write(subscr):
 def mark_nx(subscr):
     mark_Anx = c_ast.Assignment(op='=', lvalue = c_ast.ArrayRef(name=c_ast.ID(name='Anx'), subscript=subscr), rvalue=c_ast.Constant(type='int', value='1'))
     return mark_Anx
+
+def count_distinct_writes():
+    loop_body = c_ast.Compound([
+        c_ast.If(
+            cond=c_ast.BinaryOp(
+                op='==',
+                left=c_ast.ArrayRef(name=c_ast.ID(name='Aw'), subscript=c_ast.ID(name='i')),
+                right=c_ast.Constant(type='int', value='1')
+            ),
+            iftrue=c_ast.Compound([
+                c_ast.Assignment(
+                    op='+=',
+                    lvalue=c_ast.ID(name='distinct_write_counter'),
+                    rvalue=c_ast.Constant(type='int', value='1')
+                )
+            ]),
+            iffalse=None
+        )
+    ])
+
+    loop = c_ast.For(
+        init=c_ast.Decl(
+            name='i',
+            quals=[],
+            storage=[],
+            funcspec=[],
+            align=None,
+            type=c_ast.TypeDecl(
+                declname='i',
+                quals=[],
+                type=c_ast.IdentifierType(names=['int']),
+                align=None
+            ),
+            init=c_ast.Constant(type='int', value='0'),
+            bitsize=None
+        ),
+        cond=c_ast.BinaryOp(
+            op='<',
+            left=c_ast.ID(name='i'),
+            right=c_ast.Constant(type='int', value=str(4))
+        ),
+        next=c_ast.UnaryOp(
+            op='++',
+            expr=c_ast.ID(name='i')
+        ),
+        stmt=loop_body
+    )
+
+    return loop
+    
     
 def shadow_array(filename):
     ast = parse_file(filename)
@@ -213,6 +268,8 @@ def shadow_array(filename):
             stop = i
             break
     
+    end_loop = count_distinct_writes()
+    
     ast.ext[0].body.block_items = ast.ext[0].body.block_items[0:stop+1] + v.array_decls + ast.ext[0].body.block_items[stop+1:]
 
     loop = LoopVisitor()
@@ -221,7 +278,55 @@ def shadow_array(filename):
     generator = c_generator.CGenerator()
     modified_code = generator.visit(ast)
 
-    print(modified_code)
+    ast.ext[0].body.block_items = ast.ext[0].body.block_items + [end_loop]
+
+    outfile = f'marked_examples/marked_{filename}'
+
+    with open(outfile, 'w') as file:
+        file.write(modified_code)
+
+    # perform post processing, printing out Aw, Ar, Anp, Anx arrays, write_counter, distinct_write_counter
+    # Read the existing content of the C file
+    with open(outfile, 'r') as file:
+        c_code = file.read()
+
+    # Add the provided for loop before the "return 0;"
+    printed_code = c_code.replace('return 0;', '''
+    for (int i = 0; i < 4; ++i){
+        if (Aw[i] == 1)
+        ++distinct_write_counter;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        printf("%d ", Aw[i]);
+    }
+    printf("\\n");
+
+    for (int i = 0; i < 4; i++) {
+        printf("%d ", Ar[i]);
+    }
+    printf("\\n");
+
+    for (int i = 0; i < 4; i++) {
+        printf("%d ", Anx[i]);
+    }
+    printf("\\n");
+
+    for (int i = 0; i < 4; i++) {
+        printf("%d ", Anp[i]);
+    }
+    printf("\\n");
+    
+    printf("%d ", write_counter);
+    printf("\\n");
+    printf("%d ", distinct_write_counter);
+
+    return 0;
+    ''')
+
+    # Write the modified content back to the file
+    with open(outfile, 'w') as file:
+        file.write(printed_code)
 
 filename = 'example.c'
 shadow_array(filename)

@@ -5,21 +5,22 @@ int main()
   int Ar[4] = {0, 0, 0, 0};
   int Anp[4] = {0, 0, 0, 0};
   int Anx[4] = {0, 0, 0, 0};
-  int B[4] = {0, 0, 1, 1};
-  int K[4] = {1, 3, 3, 1};
-  int L[4] = {2, 2, 3, 3};
-  int R[4] = {4, 4, 4, 4};
+  int write_counter = 0;
   int i;
   for (i = 0; i < 4; i++)
   {
-    int z = A[K[i]];
-    if (B[i] == 0)
+    int Awi[4] = {0, 0, 0, 0};
+    A[i] = A[i] + 5;
+    if (Awi[i] == 0)
     {
-      A[L[i]] = z + 5;
-      A[R[i]] = A[R[i]] + 1;
+      Ar[i] = 1;
+      Anp[i] = 1;
     }
+    Aw[i] = 1;
+    Awi[i] = 1;
+    Ar[i] = 0;
+    write_counter += 1;
   }
-
   return 0;
 }
 

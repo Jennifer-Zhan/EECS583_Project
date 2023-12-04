@@ -9,7 +9,7 @@ int main() {
 
     for (i = 0; i < 4; i++) {
         int z = A[K[i]];
-        
+
         if (B[i] == 0) {
             A[L[i]] = z + 5;
             A[R[i]] = A[R[i]] + 1;

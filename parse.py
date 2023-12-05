@@ -1,5 +1,6 @@
 from pycparser import c_ast, parse_file, c_generator
 import copy
+import sys
 
 class FuncDefVisitor(c_ast.NodeVisitor):
     def __init__(self):
@@ -61,7 +62,7 @@ class LoopVisitor(c_ast.NodeVisitor):
 
                     # checking if reduction operation
                     if isinstance(stmt.lvalue, c_ast.ArrayRef) and stmt.lvalue.name.name == 'A':
-                        if subscr.name != stmt.lvalue.subscript.name:
+                        if str(subscr) != str(stmt.lvalue.subscript):
                             mark_reduction = True
                     
                     if subscr is not None:
@@ -328,5 +329,5 @@ def shadow_array(filename):
     with open(outfile, 'w') as file:
         file.write(printed_code)
 
-filename = 'example.c'
+filename = sys.argv[1]
 shadow_array(filename)

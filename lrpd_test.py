@@ -1,7 +1,8 @@
 import sys
 
-file_path = sys.argv[1]
+file_path, p_thread_indicator = sys.argv[1], sys.argv[2]
 with open(file_path, 'r') as file:
+    if p_thread_indicator == '1': file.readline()
     Aw = list(map(int, file.readline().split()))
     Ar = list(map(int, file.readline().split()))
     Anx = list(map(int, file.readline().split()))
@@ -21,4 +22,4 @@ def lrpd_test():
     
     return True
 
-print(1) if lrpd_test() else print(0)
+print('LRPD Test passed, loop is DOALL') if lrpd_test() else print('LRPD test failed, loop is NOT DOALL')

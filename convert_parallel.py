@@ -1,4 +1,5 @@
 import clang.cindex
+import sys
 clang.cindex.Config.set_library_path("/Library/Developer/CommandLineTools/usr/lib")
 
 def get_print_lines(filename):
@@ -20,6 +21,7 @@ def convert_serial_to_parallel(filename, print_line):
     braces_num = 0
     start = False
     print_num = 0
+    output_file.write("#include <omp.h>\n")
     for line in input_file:
         current_line_num += 1
         number_space = len(line) - len(line.lstrip())
@@ -34,10 +36,10 @@ def convert_serial_to_parallel(filename, print_line):
                 #print(str(print_num)+" "+str(current_line_num))
         elif(line.strip()[:5] == "print"):
             print_num += 1
-            print(str(print_num)+" "+str(current_line_num))
+            # print(str(print_num)+" "+str(current_line_num))
         if(start):
             # add lock when there is +=
-            print(line.strip().split())
+            # print(line.strip().split())
             if "+=" in line.strip().split():
                 output_file.write(number_space * " " + "#pragma omp critical\n" + number_space * " " + "{\n")
                 add_critical = True
@@ -53,6 +55,7 @@ def convert_serial_to_parallel(filename, print_line):
             start = False
 
 if __name__ == "__main__":
-    print_line = get_print_lines("marked_examples/marked_slides.c")
-    print(print_line)
-    convert_serial_to_parallel("marked_examples/marked_slides.c", print_line)
+    filename = sys.argv[1]
+    print_line = get_print_lines(filename)
+    # print(print_line)
+    convert_serial_to_parallel(filename, print_line)

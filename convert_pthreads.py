@@ -31,11 +31,11 @@ def convert_serial_to_pthreads(file_path, num_threads):
   pattern_Anp = r'int\s+Anp\[\d+\]\s+=\s+\{[^\}]+\}'
   pattern_Anx = r'int\s+Anx\[\d+\]\s+=\s+\{[^\}]+\}'
   pattern_for = r'for\s*\(\s*[a-zA-Z_]\w*\s*=\s*(\d+)\s*;\s*[a-zA-Z_]\w*\s*<\s*(\d+)\s*;\s*[a-zA-Z_]\w*\s*\+\+\s*\)'
-  pattern_global_idx_A = r'A\[(\w+)\[i\]\]'
-  pattern_global_idx_Ar = r'Ar\[(\w+)\[i\]\]'
-  pattern_global_idx_Aw = r'Aw\[(\w+)\[i\]\]'
-  pattern_global_idx_Anp = r'Anp\[(\w+)\[i\]\]'
-  pattern_global_idx_Anx = r'Anx\[(\w+)\[i\]\]'
+  pattern_global_idx_A = r'A\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
+  pattern_global_idx_Ar = r'Ar\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
+  pattern_global_idx_Aw = r'Aw\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
+  pattern_global_idx_Anp = r'Anp\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
+  pattern_global_idx_Anx = r'Anx\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
   
   
   num_for = 0
@@ -104,11 +104,11 @@ def convert_serial_to_pthreads(file_path, num_threads):
   
   new_lines.append("struct ThreadArgs {int arg1;int arg2;};")
   
-  pattern_A = r'A\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
-  pattern_shadow_r = r'Ar\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
-  pattern_shadow_w = r'Aw\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
-  pattern_shadow_np = r'Anp\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
-  pattern_shadow_nx = r'Anx\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
+  pattern_A =  r'A\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  pattern_shadow_r =  r'Ar\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  pattern_shadow_w =  r'Aw\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  pattern_shadow_np =  r'Anp\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  pattern_shadow_nx =  r'Anx\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
   
  
   # new_lines
@@ -119,8 +119,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
       variable_names = matches
       existing_var_list = []
       for match_case in matches:
-        variable_names = match_case[0]
-        if (variable_names not in existing_var_list):
+        variable_names = match_case
+        if (variable_names not in existing_var_list and "Awi" not in line):
           # print(variable_names)
           newline = "ADD_LOCK_A(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -133,8 +133,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
       variable_names = matches
       existing_var_list = []
       for match_case in matches:
-        variable_names = match_case[0]
-        if (variable_names not in existing_var_list):
+        variable_names = match_case
+        if (variable_names not in existing_var_list and "Awi" not in line):
           # print(variable_names)
           newline = "ADD_LOCK_Ar(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -147,8 +147,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
       variable_names = matches
       existing_var_list = []
       for match_case in matches:
-        variable_names = match_case[0]
-        if (variable_names not in existing_var_list):
+        variable_names = match_case
+        if (variable_names not in existing_var_list and "Awi" not in line):
           # print(variable_names)
           newline = "ADD_LOCK_Aw(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -161,8 +161,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
       variable_names = matches
       existing_var_list = []
       for match_case in matches:
-        variable_names = match_case[0]
-        if (variable_names not in existing_var_list):
+        variable_names = match_case
+        if (variable_names not in existing_var_list and "Awi" not in line):
           # print(variable_names)
           newline = "ADD_LOCK_Anp(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -175,8 +175,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
       variable_names = matches
       existing_var_list = []
       for match_case in matches:
-        variable_names = match_case[0]
-        if (variable_names not in existing_var_list):
+        variable_names = match_case
+        if (variable_names not in existing_var_list and "Awi" not in line):
           # print(variable_names)
           newline = "ADD_LOCK_Anx(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -258,5 +258,5 @@ if __name__ == "__main__":
 
   print("Current working directory:", current_directory)
   # file_path = "./marked_examples/marked_simple_500_iter.c"
-  num_threads = sys.argv[2];
+  num_threads = sys.argv[2]
   convert_serial_to_pthreads(file_path, num_threads)

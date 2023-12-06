@@ -48,6 +48,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
   
   global_line = []
   major_for_line =[]
+  locked_for_lines = []
   major_for_line_locked = []
   analysis_line =[]
   bracket_depth = 0
@@ -87,6 +88,9 @@ def convert_serial_to_pthreads(file_path, num_threads):
         new_lines.append("#define NUM_ITER " + str(int(iter_val)))
         new_lines.append("#define NUM_THREADS "+ str(int(num_threads)))
         for_start = True
+        if "{" in line:
+          bracket_depth += 1
+          locked_for_lines.append("{")
     
   new_lines.extend(global_line)
   new_lines.append("pthread_barrier_t barrier;")
@@ -106,7 +110,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
   pattern_shadow_np = r'Anp\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
   pattern_shadow_nx = r'Anx\[(([A-Za-z])\[(i)\]|\b(i\s*[\+\-\*]\s*\d+)\b)\]'
   
-  locked_for_lines = []
+ 
   # new_lines
   for idx, line in enumerate( major_for_line):
     replaced = False;
@@ -191,6 +195,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
   
   thread_func_lines = ["void *thread_func(void *arg) {", "struct ThreadArgs *threadArgs = (struct ThreadArgs *)arg;", "int i_start = threadArgs->arg1; int i_end = threadArgs->arg2;"]
   thread_func_lines.append("for (int i = i_start; i < i_end; i++)")
+  if ("{" not in locked_for_lines[0]):
+    thread_func_lines.append("{")
   thread_func_lines.extend(locked_for_lines)
   thread_func_lines.append("pthread_barrier_wait(&barrier);pthread_exit(NULL);")
   thread_func_lines.append("}")
@@ -216,9 +222,14 @@ def convert_serial_to_pthreads(file_path, num_threads):
   main_lines.append('fprintf(stderr, "error: pthread_create, error code: %d", return_value); return EXIT_FAILURE;}')
   main_lines.append("}")
   main_lines.append(" for (int i = 0; i < NUM_THREADS; ++i) {pthread_join(thread[i], NULL);}")
-  main_lines.append('for (int i = 0; i < NUM_ELEMS; ++i) {printf("%d ", A[i]);} return EXIT_SUCCESS;')
-  main_lines.append("return EXIT_SUCCESS;")
-  main_lines.append("}")
+  main_lines.append('for (int i = 0; i < NUM_ELEMS; ++i) {printf("%d ", A[i]);} printf("\\n"); ')
+  main_lines.append('for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Aw[i]);} printf("\\n"); ')
+  main_lines.append('for (int i = 0; i < NUM_ELEMS; i++) { printf("%d ", Ar[i]);}printf("\\n");for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Anx[i]);}printf("\\n");for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Anp[i]);}')
+  main_lines.append('printf("\\n");')
+  main_lines.append('for (int i = 0; i < NUM_ELEMS; ++i){if (Aw[i] == 1) ++distinct_write_counter;}')
+  main_lines.append('printf("%d ", write_counter);printf("\\n"); printf("%d ", distinct_write_counter);')
+  main_lines.append("return EXIT_SUCCESS;}")
+
   # major_for_line
   # locked_for_lines
   # thread_func_lines
@@ -230,7 +241,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
 
   # Remove the file extension
   filename_without_extension = os.path.splitext(filename_with_extension)[0]
-  file_output_path = "./test_example/" + filename_without_extension + "_pthreads.c"
+  file_output_path = "./marked_examples/" + filename_without_extension + "_pthreads.c"
 
   # Open the file for writing
   with open(file_output_path, "w") as file:
@@ -243,8 +254,9 @@ def convert_serial_to_pthreads(file_path, num_threads):
 if __name__ == "__main__":
   # Get the current working directory
   current_directory = os.getcwd()
+  file_path = sys.argv[1]
 
   print("Current working directory:", current_directory)
-  file_path = "./marked_examples/marked_simple_500_iter.c"
-  num_threads = 8;
+  # file_path = "./marked_examples/marked_simple_500_iter.c"
+  num_threads = sys.argv[2];
   convert_serial_to_pthreads(file_path, num_threads)

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int main()
 {
   int A[4] = {1, 2, 3, 4};
@@ -8,8 +10,7 @@ int main()
   int write_counter = 0;
   int distinct_write_counter = 0;
   int i;
-  for (i = 1; i < 4; i++)
-  {
+  for (i = 1; i < 4; i++){
     int Awi[4] = {0, 0, 0, 0};
     A[i] = A[i - 1] + 5;
     if (Awi[i - 1] == 0)

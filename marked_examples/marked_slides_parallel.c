@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 int main()
 {
   int A[4] = {1, 2, 3, 4};
@@ -14,6 +12,7 @@ int main()
   int L[4] = {2, 2, 3, 3};
   int R[4] = {4, 4, 4, 4};
   int i;
+  #pragma omp parallel for
   for (i = 0; i < 4; i++){
     int Awi[4] = {0, 0, 0, 0};
     int z = A[K[i]];
@@ -43,12 +42,15 @@ int main()
       write_counter += 1;
     }
   }
+  #pragma omp barrier
 
   
+    #pragma omp parallel for
     for (int i = 0; i < 4; ++i){
         if (Aw[i] == 1)
         ++distinct_write_counter;
     }
+    #pragma omp barrier
 
     for (int i = 0; i < 4; i++) {
         printf("%d ", Aw[i]);

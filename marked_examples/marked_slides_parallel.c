@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int main()
 {
   int A[4] = {1, 2, 3, 4};
@@ -29,7 +31,10 @@ int main()
       Aw[L[i]] = 1;
       Awi[L[i]] = 1;
       Ar[L[i]] = 0;
+      #pragma omp critical
+      {
       write_counter += 1;
+      }
       Anx[L[i]] = 1;
       if (Awi[R[i]] == 0)
       {
@@ -39,7 +44,10 @@ int main()
       Aw[R[i]] = 1;
       Awi[R[i]] = 1;
       Ar[R[i]] = 0;
+      #pragma omp critical
+      {
       write_counter += 1;
+      }
     }
   }
   #pragma omp barrier

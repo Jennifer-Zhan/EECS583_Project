@@ -23,7 +23,10 @@ int main()
     Aw[i] = 1;
     Awi[i] = 1;
     Ar[i] = 0;
+    #pragma omp critical
+    {
     write_counter += 1;
+    }
   }
   #pragma omp barrier
 

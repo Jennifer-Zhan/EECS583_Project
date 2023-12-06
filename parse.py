@@ -2,14 +2,19 @@ from pycparser import c_ast, parse_file, c_generator
 import copy
 import sys
 
+global_array_size = 0
+filename = sys.argv[1]
+
 class FuncDefVisitor(c_ast.NodeVisitor):
     def __init__(self):
         self.array_decls = []
 
     def visit_Decl(self, node):
+        global global_array_size
         if isinstance(node.type, c_ast.ArrayDecl) and node.name == 'A':
             shadow_names = ['Aw', 'Ar', 'Anp', 'Anx']
             array_size = node.type.dim.value
+            global_array_size = node.type.dim.value
 
             for name in shadow_names:
                 array_type = c_ast.ArrayDecl(type=c_ast.TypeDecl(declname=name, quals=[], align=None, type=c_ast.IdentifierType(names=['int'])), dim=c_ast.Constant(type='int', value=array_size), dim_quals=[])
@@ -179,8 +184,8 @@ class LoopVisitor(c_ast.NodeVisitor):
                 
         node.stmt.block_items = updated_node
 
-        array_type = c_ast.ArrayDecl(type=c_ast.TypeDecl(declname='Awi', quals=[], align=None, type=c_ast.IdentifierType(names=['int'])), dim=c_ast.Constant(type='int', value='4'), dim_quals=[])
-        init_list = c_ast.InitList([c_ast.Constant(type='int', value='0') for _ in range(int(4))])
+        array_type = c_ast.ArrayDecl(type=c_ast.TypeDecl(declname='Awi', quals=[], align=None, type=c_ast.IdentifierType(names=['int'])), dim=c_ast.Constant(type='int', value=str(global_array_size)), dim_quals=[])
+        init_list = c_ast.InitList([c_ast.Constant(type='int', value='0') for _ in range(int(global_array_size))])
         array_decl = c_ast.Decl(name='Awi', quals=[], storage=[], funcspec=[], type=array_type, bitsize=None, init=init_list, align=None)
 
         node.stmt.block_items.insert(0, array_decl)
@@ -292,32 +297,31 @@ def shadow_array(filename):
         c_code = file.read()
 
     # Add the provided for loop before the "return 0;"
-    printed_code = c_code.replace('return 0;', '''
-    for (int i = 0; i < 4; ++i){
-        if (Aw[i] == 1)
-        ++distinct_write_counter;
-    }
+    printed_code = c_code.replace('return 0;', f'''
+    for (int i = 0; i < {global_array_size}; ++i){{
+        if (Aw[i] == 1) ++distinct_write_counter;
+    }}
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < {global_array_size}; i++) {{
         printf("%d ", Aw[i]);
-    }
+    }}
     printf("\\n");
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < {global_array_size}; i++) {{
         printf("%d ", Ar[i]);
-    }
+    }}
     printf("\\n");
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < {global_array_size}; i++) {{
         printf("%d ", Anx[i]);
-    }
+    }}
     printf("\\n");
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < {global_array_size}; i++) {{
         printf("%d ", Anp[i]);
-    }
+    }}
     printf("\\n");
-    
+
     printf("%d ", write_counter);
     printf("\\n");
     printf("%d ", distinct_write_counter);
@@ -329,5 +333,4 @@ def shadow_array(filename):
     with open(outfile, 'w') as file:
         file.write(printed_code)
 
-filename = sys.argv[1]
 shadow_array(filename)

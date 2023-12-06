@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 int main()
 {
   int A[4] = {1, 2, 3, 4};
@@ -14,7 +12,8 @@ int main()
   int L[4] = {2, 2, 3, 3};
   int R[4] = {4, 4, 4, 4};
   int i;
-  for (i = 0; i < 4; i++){
+  for (i = 0; i < 4; i++)
+  {
     int Awi[4] = {0, 0, 0, 0};
     int z = A[K[i]];
     if (Awi[K[i]] == 0)
@@ -77,3 +76,4 @@ int main()
     return 0;
     
 }
+

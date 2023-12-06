@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 int main()
 {
   int A[4] = {1, 2, 3, 4};
@@ -10,7 +8,8 @@ int main()
   int write_counter = 0;
   int distinct_write_counter = 0;
   int i;
-  for (i = 0; i < 4; i++){
+  for (i = 0; i < 4; i++)
+  {
     int Awi[4] = {0, 0, 0, 0};
     A[i] = A[i] + 5;
     if (Awi[i] == 0)
@@ -26,8 +25,7 @@ int main()
 
   
     for (int i = 0; i < 4; ++i){
-        if (Aw[i] == 1)
-        ++distinct_write_counter;
+        if (Aw[i] == 1) ++distinct_write_counter;
     }
 
     for (int i = 0; i < 4; i++) {
@@ -49,12 +47,12 @@ int main()
         printf("%d ", Anp[i]);
     }
     printf("\n");
-    
+
     printf("%d ", write_counter);
     printf("\n");
     printf("%d ", distinct_write_counter);
 
     return 0;
-    
+
 }
 

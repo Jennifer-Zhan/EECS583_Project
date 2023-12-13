@@ -15,7 +15,7 @@ def get_print_lines(filename):
 
 
 def convert_serial_to_parallel(filename, print_line):
-    output_file = open(filename.split(".")[0]+"_parallel.c", "w+")
+    output_file = open(filename.replace(".c", "_parallel.c"), "w+")
     input_file = open(filename, "r")
     current_line_num = 0
     braces_num = 0

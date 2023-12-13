@@ -10,10 +10,11 @@ def convert_serial_to_pthreads(file_ath, num_threads):
       lines.append(line.strip())
   
   new_lines = []
-  new_lines.append("#define _POSIX_C_SOURCE 200112L")
+  # new_lines.append("#define _POSIX_C_SOURCE 200112L")
   new_lines.append("#include <pthread.h>")
   new_lines.append("#include <stdio.h>")
   new_lines.append("#include <stdlib.h>")
+  new_lines.append("#include <time.h>")
   # new_lines.append('#include "pthreads_barrier.h"')
   
   new_lines.append("#define ADD_LOCK_A(idx, code) pthread_mutex_lock(locks_A + (idx)); code pthread_mutex_unlock(locks_A + (idx));")
@@ -202,11 +203,14 @@ def convert_serial_to_pthreads(file_ath, num_threads):
     thread_func_lines.append("{")
   thread_func_lines.extend(locked_for_lines)
   # thread_func_lines.append("pthread_barrier_wait(&barrier);pthread_exit(NULL);")
+  thread_func_lines.append("pthread_exit(NULL);")
   thread_func_lines.append("}")
   
   new_lines.extend(thread_func_lines)
   
   main_lines = ["int main(int argc, char **argv) {"]
+  main_lines.append("struct timespec start, end;")
+  main_lines.append("clock_gettime(CLOCK_MONOTONIC, &start);")
   main_lines.append("pthread_t thread[NUM_THREADS];")
   main_lines.append("for (int i = 0; i < NUM_ELEMS; i++) {")
   main_lines.append("pthread_mutex_init(locks_A + i, NULL);")
@@ -225,6 +229,10 @@ def convert_serial_to_pthreads(file_ath, num_threads):
   main_lines.append('fprintf(stderr, "error: pthread_create, error code: %d", return_value); return EXIT_FAILURE;}')
   main_lines.append("}")
   main_lines.append(" for (int i = 0; i < NUM_THREADS; ++i) {pthread_join(thread[i], NULL);}")
+  main_lines.append("clock_gettime(CLOCK_MONOTONIC, &end);")
+  main_lines.append('printf("Iter_num = %d time \\n", NUM_ITER);')
+  main_lines.append('double elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;')
+  main_lines.append('printf("Elapsed time: %lf seconds\\n", elapsed_time);')
   main_lines.append('for (int i = 0; i < NUM_ELEMS; ++i) {printf("%d ", A[i]);} printf("\\n"); ')
   main_lines.append('for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Aw[i]);} printf("\\n"); ')
   main_lines.append('for (int i = 0; i < NUM_ELEMS; i++) { printf("%d ", Ar[i]);}printf("\\n");for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Anx[i]);}printf("\\n");for (int i = 0; i < NUM_ELEMS; i++) {printf("%d ", Anp[i]);}')
@@ -244,7 +252,7 @@ def convert_serial_to_pthreads(file_ath, num_threads):
 
   # Remove the file extension
   filename_without_extension = os.path.splitext(filename_with_extension)[0]
-  file_output_path = "../marked_examples/" + filename_without_extension + "_pthreads.c"
+  file_output_path = "./marked_examples/" + filename_without_extension + "_pthreads.c"
 
   # Open the file for writing
   with open(file_output_path, "w") as file:

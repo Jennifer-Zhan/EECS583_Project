@@ -252,7 +252,7 @@ def convert_serial_to_pthreads(file_ath, num_threads):
 
   # Remove the file extension
   filename_without_extension = os.path.splitext(filename_with_extension)[0]
-  file_output_path = "../marked_examples/" + filename_without_extension + "_pthreads.c"
+  file_output_path = "./marked_examples/" + filename_without_extension + "_pthreads.c"
 
   # Open the file for writing
   with open(file_output_path, "w") as file:

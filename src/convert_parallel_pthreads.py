@@ -2,7 +2,7 @@ import sys
 import re
 import os
 
-def convert_serial_to_pthreads(file_path, num_threads):
+def convert_serial_to_pthreads(file_ath, num_threads):
   lines = []
 
   with open(file_path, "r") as file:
@@ -14,7 +14,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
   new_lines.append("#include <pthread.h>")
   new_lines.append("#include <stdio.h>")
   new_lines.append("#include <stdlib.h>")
-  new_lines.append('#include "pthreads_barrier.h"')
+  # new_lines.append('#include "pthreads_barrier.h"')
   
   new_lines.append("#define ADD_LOCK_A(idx, code) pthread_mutex_lock(locks_A + (idx)); code pthread_mutex_unlock(locks_A + (idx));")
   new_lines.append("#define ADD_LOCK_Ar(idx, code) pthread_mutex_lock(locks_Ar + (idx)); code pthread_mutex_unlock(locks_Ar + (idx));")
@@ -93,7 +93,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
           locked_for_lines.append("{")
     
   new_lines.extend(global_line)
-  new_lines.append("pthread_barrier_t barrier;")
+  # new_lines.append("pthread_barrier_t barrier;")
   new_lines.append("pthread_mutex_t locks_A[NUM_ELEMS];")
   new_lines.append("pthread_mutex_t locks_Ar[NUM_ELEMS];")
   new_lines.append("pthread_mutex_t locks_Aw[NUM_ELEMS];")
@@ -104,7 +104,8 @@ def convert_serial_to_pthreads(file_path, num_threads):
   
   new_lines.append("struct ThreadArgs {int arg1;int arg2;};")
   
-  pattern_A =  r'A\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  # pattern_A =  r'A\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
+  pattern_A = r'A\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
   pattern_shadow_r =  r'Ar\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
   pattern_shadow_w =  r'Aw\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
   pattern_shadow_np =  r'Anp\w*\[([^][]*(?:\[[^][]*\])?[^][]*)\]'
@@ -113,7 +114,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
  
   # new_lines
   for idx, line in enumerate( major_for_line):
-    replaced = False;
+    replaced = False
     matches = re.findall(pattern_A, line)
     if matches:
       variable_names = matches
@@ -121,6 +122,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
       for match_case in matches:
         variable_names = match_case
         if (variable_names not in existing_var_list and "Awi" not in line):
+          print(line)
           # print(variable_names)
           newline = "ADD_LOCK_A(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -135,6 +137,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
       for match_case in matches:
         variable_names = match_case
         if (variable_names not in existing_var_list and "Awi" not in line):
+          # print(line)
           # print(variable_names)
           newline = "ADD_LOCK_Ar(" + variable_names + ","+ line + ")"
           existing_var_list.append(variable_names)
@@ -191,17 +194,17 @@ def convert_serial_to_pthreads(file_path, num_threads):
       
     if not replaced:
       locked_for_lines.append(line)
-  # locked_for_lines
+  # print(locked_for_lines)
   
   thread_func_lines = ["void *thread_func(void *arg) {", "struct ThreadArgs *threadArgs = (struct ThreadArgs *)arg;", "int i_start = threadArgs->arg1; int i_end = threadArgs->arg2;"]
   thread_func_lines.append("for (int i = i_start; i < i_end; i++)")
   if ("{" not in locked_for_lines[0]):
     thread_func_lines.append("{")
   thread_func_lines.extend(locked_for_lines)
-  thread_func_lines.append("pthread_barrier_wait(&barrier);pthread_exit(NULL);")
+  # thread_func_lines.append("pthread_barrier_wait(&barrier);pthread_exit(NULL);")
   thread_func_lines.append("}")
   
-  new_lines.extend(thread_func_lines);
+  new_lines.extend(thread_func_lines)
   
   main_lines = ["int main(int argc, char **argv) {"]
   main_lines.append("pthread_t thread[NUM_THREADS];")
@@ -241,7 +244,7 @@ def convert_serial_to_pthreads(file_path, num_threads):
 
   # Remove the file extension
   filename_without_extension = os.path.splitext(filename_with_extension)[0]
-  file_output_path = "./marked_examples/" + filename_without_extension + "_pthreads.c"
+  file_output_path = "../marked_examples/" + filename_without_extension + "_pthreads.c"
 
   # Open the file for writing
   with open(file_output_path, "w") as file:
